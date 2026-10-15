@@ -1,0 +1,769 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>英语听说读写全能练</title>
+    <style>
+        /* --- 基础样式 --- */
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        
+        body {
+    font-family: "Comic Sans MS", "YouYuan", "Microsoft YaHei", sans-serif;
+    background: linear-gradient(135deg, #e0c3fc 0%, #8ec5fc 100%);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 15px;
+    color: #333;
+    overflow-x: hidden;
+    overflow-y: scroll;   /* ← 改这里：scroll 而非 hidden */
+}
+
+        h1 {
+            font-size: 24px;
+            color: #fff;
+            margin-bottom: 15px;
+            text-shadow: 1px 1px 3px rgba(0,0,0,0.2);
+            text-align: center;
+        }
+
+        .game-card {
+            width: 100%;
+            max-width: 600px;
+            background: white;
+            border-radius: 20px;
+            padding: 20px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+            text-align: center;
+            position: relative;
+            transition: transform 0.3s ease;
+        }
+
+        /* --- 顶部栏 --- */
+        .top-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px dashed #eee;
+        }
+
+        .mode-badge {
+            background: #6c5ce7;
+            color: white;
+            padding: 5px 12px;
+            border-radius: 15px;
+            font-size: 14px;
+            font-weight: bold;
+            border: none;
+            cursor: pointer;
+            outline: none;
+        }
+        .mode-badge.sentence-mode { background: #e17055; }
+
+        .speaker-btn {
+            background: #0984e3;
+            color: white;
+            border: none;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            font-size: 20px;
+            cursor: pointer;
+            box-shadow: 0 3px 0 #0769b5;
+        }
+        .speaker-btn:active { transform: translateY(3px); box-shadow: none; }
+
+        /* --- 内容区域 --- */
+        .prompt-cn {
+            font-size: 22px;
+            color: #2d3436;
+            margin-bottom: 20px;
+            font-weight: bold;
+        }
+
+        /* 槽位容器 */
+        .slots-container {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            margin-bottom: 25px;
+            min-height: 50px;
+            flex-wrap: wrap;
+        }
+
+        /* 字母槽位 */
+        .letter-slot {
+            width: 40px;
+            height: 40px;
+            border-bottom: 3px solid #b2bec3;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            font-weight: bold;
+            color: #0984e3;
+            cursor: pointer;
+            background: #f5f6fa;
+            border-radius: 6px;
+        }
+        .letter-slot.filled {
+            border: 2px solid #0984e3;
+            background: #dff9fb;
+            transform: translateY(-2px);
+        }
+
+        /* 单词槽位 (句子模式) */
+        .word-slot {
+            padding: 8px 12px;
+            height: 40px;
+            border-bottom: 3px solid #fab1a0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            font-weight: bold;
+            color: #d63031;
+            cursor: pointer;
+            background: #fff0f0;
+            border-radius: 6px;
+            min-width: 60px;
+        }
+        .word-slot.filled {
+            border: 2px solid #d63031;
+            background: #ffeaa7;
+            transform: translateY(-2px);
+        }
+
+        /* 选项区域 */
+        .options-area {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            flex-wrap: wrap;
+            background: #f1f2f6;
+            padding: 15px;
+            border-radius: 15px;
+        }
+
+        /* 字母按钮 */
+        .letter-btn {
+            width: 40px;
+            height: 40px;
+            background: white;
+            border: 2px solid #0984e3;
+            border-radius: 8px;
+            font-size: 20px;
+            font-weight: bold;
+            color: #0984e3;
+            cursor: pointer;
+            box-shadow: 0 3px 0 #0769b5;
+        }
+        .letter-btn:active { transform: translateY(3px); box-shadow: none; }
+        .letter-btn.used { opacity: 0.3; pointer-events: none; box-shadow: none; transform: translateY(3px); }
+
+        /* 单词按钮 (句子模式) */
+        .word-btn {
+            padding: 8px 15px;
+            background: white;
+            border: 2px solid #e17055;
+            border-radius: 20px;
+            font-size: 16px;
+            font-weight: bold;
+            color: #e17055;
+            cursor: pointer;
+            box-shadow: 0 3px 0 #c05842;
+            transition: all 0.1s;
+        }
+        .word-btn:active { transform: translateY(3px); box-shadow: none; }
+        .word-btn.used { opacity: 0.3; pointer-events: none; box-shadow: none; transform: translateY(3px); }
+
+        /* --- 底部控制 --- */
+        .controls {
+            margin-top: 20px;
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            height: 40px;
+        }
+
+        .btn {
+            padding: 8px 20px;
+            border: none;
+            border-radius: 20px;
+            font-weight: bold;
+            color: white;
+            cursor: pointer;
+            box-shadow: 0 3px 0 rgba(0,0,0,0.2);
+            display: none;
+        }
+        .btn:active { transform: translateY(3px); box-shadow: none; }
+        
+        .btn-next { background: #00b894; }
+
+        .status-msg {
+            margin-top: 10px;
+            font-size: 18px;
+            font-weight: bold;
+            height: 25px;
+        }
+        .success { color: #00b894; }
+        .error { color: #d63031; }
+
+        /* 庆祝动画 */
+        .confetti {
+            position: absolute;
+            width: 8px;
+            height: 8px;
+            background: red;
+            animation: fall 2s linear forwards;
+            z-index: 100;
+        }
+        @keyframes fall { to { transform: translateY(100vh) rotate(720deg); opacity: 0; } }
+
+        /* 锁定高度的辅助类 */
+        .slots-container.locked, .options-area.locked {
+            overflow: hidden;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>🎧 单词拼写 & 句子重组</h1>
+
+    <div class="game-card" id="game-card">
+        <!-- 顶部 -->
+        <div class="top-bar">
+            <select class="mode-badge" id="mode-badge" onchange="onUnitChange(this.value)">
+                <option value="0">📖 单元选择</option>
+            </select>
+            <button class="speaker-btn" onclick="playAudio()">🔊</button>
+        </div>
+
+        <!-- 中文提示 -->
+        <div class="prompt-cn" id="cn-text">准备开始...</div>
+
+        <!-- 答题区 -->
+        <div class="slots-container" id="slots-area"></div>
+
+        <!-- 选项区 -->
+        <div class="options-area" id="options-area"></div>
+
+        <!-- 反馈 -->
+        <div class="status-msg" id="msg-area"></div>
+
+        <!-- 按钮 -->
+        <div class="controls">
+            <button class="btn btn-next" id="btn-next" onclick="nextStageOrWord()">下一步 ➡</button>
+        </div>
+    </div>
+
+    <script>
+        // --- 单元数据配置 ---
+        const unitData = [
+            {
+                unit: "Starter: Welcome to school",
+                words: [
+                    { word: "welcome", cn: "欢迎", sentence: "Welcome to school.", sentenceCn: "欢迎来到学校。" },
+                    { word: "school", cn: "学校", sentence: "Welcome to school.", sentenceCn: "欢迎来到学校。" },
+                    { word: "hi", cn: "嗨", sentence: "Hi!", sentenceCn: "嗨！" },
+                    { word: "I", cn: "我", sentence: "I'm Lingling.", sentenceCn: "我是玲玲。" },
+                    { word: "what", cn: "什么", sentence: "What's your name?", sentenceCn: "你叫什么名字？" },
+                    { word: "your", cn: "你的", sentence: "What's your name?", sentenceCn: "你叫什么名字？" },
+                    { word: "name", cn: "名字", sentence: "My name is Amy!", sentenceCn: "我的名字是艾米！" },
+                    { word: "hello", cn: "你好", sentence: "Hello.", sentenceCn: "你好。" },
+                    { word: "my", cn: "我的", sentence: "My name is Amy!", sentenceCn: "我的名字是艾米！" },
+                    { word: "goodbye", cn: "再见", sentence: "Goodbye, Bobo.", sentenceCn: "再见，波波。" },
+                    { word: "have", cn: "有", sentence: "Have a nice day!", sentenceCn: "祝你有美好的一天！" },
+                    { word: "nice", cn: "美好的", sentence: "Have a nice day!", sentenceCn: "祝你有美好的一天！" },
+                    { word: "day", cn: "一天", sentence: "Have a nice day!", sentenceCn: "祝你有美好的一天！" },
+                    { word: "good", cn: "好的", sentence: "Good morning!", sentenceCn: "早上好！" },
+                    { word: "morning", cn: "早上", sentence: "Good morning!", sentenceCn: "早上好！" },
+                    { word: "Ms", cn: "女士", sentence: "I'm Ms Smart.", sentenceCn: "我是斯玛特女士。" },
+                    { word: "stand", cn: "站", sentence: "Stand, please.", sentenceCn: "请站起来。" },
+                    { word: "sit", cn: "坐", sentence: "Sit here.", sentenceCn: "坐这里。" },
+                    { word: "open", cn: "打开", sentence: "Open your book.", sentenceCn: "打开你的书。" },
+                    { word: "book", cn: "书", sentence: "Open your book.", sentenceCn: "打开你的书。" },
+                    { word: "close", cn: "关闭", sentence: "Close your book.", sentenceCn: "合上你的书。" },
+                    { word: "point", cn: "指向", sentence: "Point to the door.", sentenceCn: "指向门。" },
+                    { word: "say", cn: "说", sentence: "Say hello.", sentenceCn: "说你好。" },
+                    { word: "read", cn: "读", sentence: "Read the word.", sentenceCn: "读这个单词。" },
+                    { word: "listen", cn: "听", sentence: "Listen to me.", sentenceCn: "听我说。" },
+                    { word: "write", cn: "写", sentence: "Write your name.", sentenceCn: "写你的名字。" }
+                ]
+            },
+            {
+                unit: "Unit 1: Let's be friends!",
+                words: [
+                    { word: "friend", cn: "朋友", sentence: "She is my friend.", sentenceCn: "她是我的朋友。" },
+                    { word: "meet", cn: "遇见", sentence: "Nice to meet you.", sentenceCn: "很高兴见到你。" },
+                    { word: "you", cn: "你", sentence: "How are you?", sentenceCn: "你好吗？" },
+                    { word: "play", cn: "玩", sentence: "Let's play together!", sentenceCn: "我们一起玩吧！" },
+                    { word: "happy", cn: "快乐的", sentence: "Let's have a happy day!", sentenceCn: "让我们拥有快乐的一天！" },
+                    { word: "new", cn: "新的", sentence: "Hi, new friends!", sentenceCn: "嗨，新朋友们！" },
+                    { word: "do", cn: "做", sentence: "What do you like?", sentenceCn: "你喜欢什么？" },
+                    { word: "they", cn: "他们", sentence: "They are from the UK.", sentenceCn: "他们来自英国。" },
+                    { word: "welcome", cn: "欢迎", sentence: "Welcome!", sentenceCn: "欢迎！" },
+                    { word: "everyone", cn: "每个人", sentence: "Hi, everyone!", sentenceCn: "嗨，大家好！" },
+                    { word: "nine", cn: "九", sentence: "I'm nine.", sentenceCn: "我九岁了。" },
+                    { word: "she", cn: "她", sentence: "She's Amy.", sentenceCn: "她是艾米。" },
+                    { word: "too", cn: "也", sentence: "She's nine, too.", sentenceCn: "她也九岁了。" },
+                    { word: "we", cn: "我们", sentence: "We're from the UK.", sentenceCn: "我们来自英国。" },
+                    { word: "from", cn: "来自", sentence: "We're from the UK.", sentenceCn: "我们来自英国。" },
+                    { word: "twin", cn: "双胞胎", sentence: "He's my twin.", sentenceCn: "他是我的双胞胎。" },
+                    { word: "he", cn: "他", sentence: "He's Sam.", sentenceCn: "他是萨姆。" },
+                    { word: "come", cn: "来", sentence: "Come and play!", sentenceCn: "来玩吧！" },
+                    { word: "and", cn: "和", sentence: "Come and play!", sentenceCn: "来玩吧！" },
+                    { word: "oh", cn: "哦", sentence: "Oh, no!", sentenceCn: "哦，不！" },
+                    { word: "no", cn: "不", sentence: "No, thanks.", sentenceCn: "不，谢谢。" },
+                    { word: "help", cn: "帮助", sentence: "Help!", sentenceCn: "救命！" },
+                    { word: "here", cn: "这里", sentence: "Here you are.", sentenceCn: "给你。" },
+                    { word: "thank", cn: "谢谢", sentence: "Thank you.", sentenceCn: "谢谢你。" },
+                    { word: "together", cn: "一起", sentence: "Let's play together!", sentenceCn: "我们一起玩吧！" },
+                    { word: "OK", cn: "好的", sentence: "OK!", sentenceCn: "好的！" },
+                    { word: "great", cn: "太棒了", sentence: "Great!", sentenceCn: "太棒了！" },
+                    { word: "song", cn: "歌曲", sentence: "Sing a song.", sentenceCn: "唱首歌。" },
+                    { word: "dear", cn: "亲爱的", sentence: "Dear friends,", sentenceCn: "亲爱的朋友们，" },
+                    { word: "sing", cn: "唱", sentence: "Sing a song.", sentenceCn: "唱首歌。" },
+                    { word: "now", cn: "现在", sentence: "Now I'm nine.", sentenceCn: "现在我九岁了。" },
+                    { word: "know", cn: "知道", sentence: "I don't know.", sentenceCn: "我不知道。" },
+                    { word: "our", cn: "我们的", sentence: "Look at our umbrellas.", sentenceCn: "看我们的雨伞。" },
+                    { word: "with", cn: "和…一起", sentence: "Play with me.", sentenceCn: "和我一起玩。" }
+                ]
+            },
+            {
+                unit: "Unit 2: My school things",
+                words: [
+                    { word: "thing", cn: "东西", sentence: "My school things.", sentenceCn: "我的学校用品。" },
+                    { word: "pack", cn: "收拾", sentence: "Pack my pen.", sentenceCn: "收拾我的钢笔。" },
+                    { word: "pen", cn: "钢笔", sentence: "Pack my pen.", sentenceCn: "收拾我的钢笔。" },
+                    { word: "pencil", cn: "铅笔", sentence: "Pack my pencil.", sentenceCn: "收拾我的铅笔。" },
+                    { word: "bag", cn: "书包", sentence: "Pack my bag for school.", sentenceCn: "收拾书包去上学。" },
+                    { word: "ruler", cn: "尺子", sentence: "Pack my ruler.", sentenceCn: "收拾我的尺子。" },
+                    { word: "eraser", cn: "橡皮", sentence: "Pack my eraser.", sentenceCn: "收拾我的橡皮。" },
+                    { word: "this", cn: "这个", sentence: "What's this?", sentenceCn: "这是什么？" },
+                    { word: "in", cn: "在…里", sentence: "What's in Amy's schoolbag?", sentenceCn: "艾米的书包里有什么？" },
+                    { word: "schoolbag", cn: "书包", sentence: "What's in Amy's schoolbag?", sentenceCn: "艾米的书包里有什么？" },
+                    { word: "it", cn: "它", sentence: "It's a pen.", sentenceCn: "它是一支钢笔。" },
+                    { word: "not", cn: "不", sentence: "It's not a pen.", sentenceCn: "它不是一支钢笔。" },
+                    { word: "that", cn: "那个", sentence: "What's that?", sentenceCn: "那是什么？" },
+                    { word: "yes", cn: "是的", sentence: "Yes, it is.", sentenceCn: "是的，它是。" },
+                    { word: "guess", cn: "猜", sentence: "Can you guess?", sentenceCn: "你能猜到吗？" },
+                    { word: "find", cn: "找到", sentence: "I can find my ruler.", sentenceCn: "我能找到我的尺子。" },
+                    { word: "lost", cn: "丢失", sentence: "Lost and Found", sentenceCn: "失物招领" },
+                    { word: "bye", cn: "再见", sentence: "Bye!", sentenceCn: "再见！" },
+                    { word: "kid", cn: "孩子", sentence: "Hi, kids!", sentenceCn: "嗨，孩子们！" },
+                    { word: "take", cn: "拿", sentence: "Take care of your school things.", sentenceCn: "保管好你的学校用品。" },
+                    { word: "there", cn: "那里", sentence: "There it is.", sentenceCn: "它在那里。" },
+                    { word: "please", cn: "请", sentence: "Please sit down.", sentenceCn: "请坐。" },
+                    { word: "back", cn: "回来", sentence: "Come back!", sentenceCn: "回来！" },
+                    { word: "look", cn: "看", sentence: "Look at your bag.", sentenceCn: "看你的书包。" }
+                ]
+            },
+            {
+                unit: "Unit 3: It's a colourful world!",
+                words: [
+                    { word: "colourful", cn: "多彩的", sentence: "It's a colourful world!", sentenceCn: "这是一个多彩的世界！" },
+                    { word: "world", cn: "世界", sentence: "It's a colourful world!", sentenceCn: "这是一个多彩的世界！" },
+                    { word: "umbrella", cn: "雨伞", sentence: "Look at our umbrellas.", sentenceCn: "看我们的雨伞。" },
+                    { word: "red", cn: "红色", sentence: "It's red!", sentenceCn: "它是红色的！" },
+                    { word: "pink", cn: "粉色", sentence: "It's pink!", sentenceCn: "它是粉色的！" },
+                    { word: "green", cn: "绿色", sentence: "It's green!", sentenceCn: "它是绿色的！" },
+                    { word: "yellow", cn: "黄色", sentence: "It's yellow!", sentenceCn: "它是黄色的！" },
+                    { word: "orange", cn: "橙色", sentence: "It's orange!", sentenceCn: "它是橙色的！" },
+                    { word: "blue", cn: "蓝色", sentence: "It's blue!", sentenceCn: "它是蓝色的！" },
+                    { word: "purple", cn: "紫色", sentence: "It's purple!", sentenceCn: "它是紫色的！" },
+                    { word: "rainbow", cn: "彩虹", sentence: "A rainbow there!", sentenceCn: "那里有一道彩虹！" },
+                    { word: "want", cn: "想要", sentence: "I want a balloon!", sentenceCn: "我想要一个气球！" },
+                    { word: "balloon", cn: "气球", sentence: "I want a balloon!", sentenceCn: "我想要一个气球！" },
+                    { word: "colour", cn: "颜色", sentence: "What colour is it?", sentenceCn: "它是什么颜色？" },
+                    { word: "can", cn: "能", sentence: "Can you guess?", sentenceCn: "你能猜到吗？" },
+                    { word: "see", cn: "看见", sentence: "I can see a rainbow.", sentenceCn: "我能看见一道彩虹。" },
+                    { word: "right", cn: "正确的", sentence: "You are right.", sentenceCn: "你是对的。" },
+                    { word: "first", cn: "第一", sentence: "First, red.", sentenceCn: "首先，红色。" },
+                    { word: "magical", cn: "神奇的", sentence: "Magical colours!", sentenceCn: "神奇的颜色！" },
+                    { word: "fun", cn: "有趣的", sentence: "It's fun!", sentenceCn: "真有趣！" },
+                    { word: "black", cn: "黑色", sentence: "It's black!", sentenceCn: "它是黑色的！" },
+                    { word: "so", cn: "如此", sentence: "So many colours!", sentenceCn: "这么多颜色！" },
+                    { word: "many", cn: "许多", sentence: "So many colours!", sentenceCn: "这么多颜色！" },
+                    { word: "picture", cn: "图画", sentence: "Draw a picture.", sentenceCn: "画一幅画。" },
+                    { word: "today", cn: "今天", sentence: "Today is a colourful day.", sentenceCn: "今天是多彩的一天。" },
+                    { word: "paint", cn: "涂色", sentence: "Paint it red.", sentenceCn: "把它涂成红色。" }
+                ]
+            },
+            {
+                unit: "Unit 4: Fun with numbers",
+                words: [
+                    { word: "number", cn: "数字", sentence: "Fun with numbers", sentenceCn: "数字乐趣" },
+                    { word: "count", cn: "数数", sentence: "Count, count, count with me!", sentenceCn: "跟我一起数！" },
+                    { word: "how", cn: "如何", sentence: "How many birds can you see?", sentenceCn: "你能看到多少只鸟？" },
+                    { word: "bird", cn: "鸟", sentence: "How many birds can you see?", sentenceCn: "你能看到多少只鸟？" },
+                    { word: "one", cn: "一", sentence: "One, two, three!", sentenceCn: "一、二、三！" },
+                    { word: "two", cn: "二", sentence: "One, two, three!", sentenceCn: "一、二、三！" },
+                    { word: "three", cn: "三", sentence: "One, two, three!", sentenceCn: "一、二、三！" },
+                    { word: "four", cn: "四", sentence: "Four, five, six!", sentenceCn: "四、五、六！" },
+                    { word: "five", cn: "五", sentence: "Four, five, six!", sentenceCn: "四、五、六！" },
+                    { word: "six", cn: "六", sentence: "Four, five, six!", sentenceCn: "四、五、六！" },
+                    { word: "seven", cn: "七", sentence: "Seven, eight, nine!", sentenceCn: "七、八、九！" },
+                    { word: "eight", cn: "八", sentence: "Seven, eight, nine!", sentenceCn: "七、八、九！" },
+                    { word: "ten", cn: "十", sentence: "Ten, eleven, twelve!", sentenceCn: "十、十一、十二！" },
+                    { word: "eleven", cn: "十一", sentence: "Ten, eleven, twelve!", sentenceCn: "十、十一、十二！" },
+                    { word: "twelve", cn: "十二", sentence: "Ten, eleven, twelve!", sentenceCn: "十、十一、十二！" },
+                    { word: "rope", cn: "绳子", sentence: "How many ropes?", sentenceCn: "多少根绳子？" },
+                    { word: "who", cn: "谁", sentence: "Who can make a Chinese knot?", sentenceCn: "谁能编中国结？" },
+                    { word: "make", cn: "制作", sentence: "Who can make a Chinese knot?", sentenceCn: "谁能编中国结？" },
+                    { word: "beautiful", cn: "美丽的", sentence: "It's beautiful!", sentenceCn: "真漂亮！" },
+                    { word: "only", cn: "仅仅", sentence: "Only one rope!", sentenceCn: "只有一根绳子！" },
+                    { word: "show", cn: "展示", sentence: "Show me your ropes.", sentenceCn: "给我看看你的绳子。" },
+                    { word: "baby", cn: "宝贝", sentence: "Baby bird.", sentenceCn: "小鸟宝宝。" },
+                    { word: "egg", cn: "蛋", sentence: "It's an egg.", sentenceCn: "它是一个蛋。" },
+                    { word: "hungry", cn: "饥饿的", sentence: "I'm hungry.", sentenceCn: "我饿了。" },
+                    { word: "around", cn: "周围", sentence: "All around.", sentenceCn: "到处。" },
+                    { word: "big", cn: "大的", sentence: "Big bird.", sentenceCn: "大鸟。" },
+                    { word: "little", cn: "小的", sentence: "Little bird.", sentenceCn: "小鸟。" },
+                    { word: "everywhere", cn: "到处", sentence: "Birds everywhere!", sentenceCn: "到处都是鸟！" }
+                ]
+            },
+            {
+                unit: "Unit 5: We're family",
+                words: [
+                    { word: "family", cn: "家庭", sentence: "This is my family.", sentenceCn: "这是我的家庭。" },
+                    { word: "dad", cn: "爸爸", sentence: "Dad, mum, brother, sister…", sentenceCn: "爸爸、妈妈、哥哥、姐姐…" },
+                    { word: "father", cn: "父亲", sentence: "This is my father.", sentenceCn: "这是我的父亲。" },
+                    { word: "mum", cn: "妈妈", sentence: "Mum, dad…", sentenceCn: "妈妈、爸爸…" },
+                    { word: "mother", cn: "母亲", sentence: "This is my mother.", sentenceCn: "这是我的母亲。" },
+                    { word: "brother", cn: "兄弟", sentence: "This is my brother.", sentenceCn: "这是我的兄弟。" },
+                    { word: "sister", cn: "姐妹", sentence: "This is my sister.", sentenceCn: "这是我的姐妹。" },
+                    { word: "grandpa", cn: "爷爷", sentence: "This is my grandpa.", sentenceCn: "这是我的爷爷。" },
+                    { word: "grandfather", cn: "祖父", sentence: "This is my grandfather.", sentenceCn: "这是我的祖父。" },
+                    { word: "grandma", cn: "奶奶", sentence: "That is my grandma!", sentenceCn: "那是我的奶奶！" },
+                    { word: "grandmother", cn: "祖母", sentence: "This is my grandmother.", sentenceCn: "这是我的祖母。" },
+                    { word: "but", cn: "但是", sentence: "But who is that?", sentenceCn: "但那是谁？" },
+                    { word: "people", cn: "人们", sentence: "We are a big family.", sentenceCn: "我们是一个大家庭。" },
+                    { word: "story", cn: "故事", sentence: "Family story", sentenceCn: "家庭故事" },
+                    { word: "cap", cn: "帽子", sentence: "Here's your cap.", sentenceCn: "这是你的帽子。" },
+                    { word: "worry", cn: "担心", sentence: "Don't worry.", sentenceCn: "别担心。" },
+                    { word: "on", cn: "在…上", sentence: "on the photo", sentenceCn: "在照片上" },
+                    { word: "comeon", cn: "加油", sentence: "Come on!", sentenceCn: "加油！" },
+                    { word: "photo", cn: "照片", sentence: "Look at the photo.", sentenceCn: "看这张照片。" },
+                    { word: "love", cn: "爱", sentence: "I love my family.", sentenceCn: "我爱我的家庭。" },
+                    { word: "daddy", cn: "爸爸", sentence: "Hi, daddy!", sentenceCn: "嗨，爸爸！" },
+                    { word: "mummy", cn: "妈妈", sentence: "Hi, mummy!", sentenceCn: "嗨，妈妈！" },
+                    { word: "where", cn: "哪里", sentence: "Where is Susu?", sentenceCn: "苏苏在哪里？" },
+                    { word: "dog", cn: "狗", sentence: "It's a dog.", sentenceCn: "它是一只狗。" }
+                ]
+            },
+            {
+                unit: "Unit 6: My sweet home",
+                words: [
+                    { word: "sweet", cn: "甜蜜的", sentence: "My sweet home", sentenceCn: "我甜蜜的家" },
+                    { word: "home", cn: "家", sentence: "My sweet home", sentenceCn: "我甜蜜的家" },
+                    { word: "game", cn: "游戏", sentence: "Let's play a game.", sentenceCn: "我们玩个游戏吧。" },
+                    { word: "room", cn: "房间", sentence: "Who is in the living room?", sentenceCn: "谁在客厅里？" },
+                    { word: "living", cn: "客厅", sentence: "Who is in the living room?", sentenceCn: "谁在客厅里？" },
+                    { word: "bedroom", cn: "卧室", sentence: "Who is in the bedroom?", sentenceCn: "谁在卧室里？" },
+                    { word: "bathroom", cn: "浴室", sentence: "Who is in the bathroom?", sentenceCn: "谁在浴室里？" },
+                    { word: "kitchen", cn: "厨房", sentence: "Who is in the kitchen?", sentenceCn: "谁在厨房里？" },
+                    { word: "dining", cn: "餐厅", sentence: "Who is in the dining room?", sentenceCn: "谁在餐厅里？" },
+                    { word: "door", cn: "门", sentence: "Let me open the doors.", sentenceCn: "让我打开门。" },
+                    { word: "chair", cn: "椅子", sentence: "Point to the chair.", sentenceCn: "指向椅子。" },
+                    { word: "think", cn: "想", sentence: "I think it's here.", sentenceCn: "我想它在这里。" },
+                    { word: "under", cn: "在…下面", sentence: "The cat is under the bed.", sentenceCn: "猫在床下面。" },
+                    { word: "bed", cn: "床", sentence: "The cat is under the bed.", sentenceCn: "猫在床下面。" },
+                    { word: "toy", cn: "玩具", sentence: "It's my toy.", sentenceCn: "它是我的玩具。" },
+                    { word: "table", cn: "桌子", sentence: "on the table", sentenceCn: "在桌子上" },
+                    { word: "cat", cn: "猫", sentence: "Where is the cat?", sentenceCn: "猫在哪里？" },
+                    { word: "ball", cn: "球", sentence: "It's a ball.", sentenceCn: "它是一个球。" },
+                    { word: "apple", cn: "苹果", sentence: "an apple", sentenceCn: "一个苹果" },
+                    { word: "share", cn: "分享", sentence: "share the room", sentenceCn: "分享房间" },
+                    { word: "put", cn: "放", sentence: "Put it on the bed.", sentenceCn: "把它放在床上。" },
+                    { word: "cooking", cn: "做饭", sentence: "Mum is cooking.", sentenceCn: "妈妈正在做饭。" },
+                    { word: "sun", cn: "太阳", sentence: "The sun is in the sky.", sentenceCn: "太阳在天空中。" },
+                    { word: "like", cn: "喜欢", sentence: "I like my room.", sentenceCn: "我喜欢我的房间。" },
+                    { word: "run", cn: "跑", sentence: "Run to the door!", sentenceCn: "跑到门口！" },
+                    { word: "lucky", cn: "幸运的", sentence: "Lucky cat!", sentenceCn: "幸运猫！" }
+                ]
+            }
+        ];
+
+        // 游戏状态
+        let currentUnitIndex = 0;
+        let currentWordIndex = 0;
+        let currentMode = 'word'; // 'word' or 'sentence'
+        let currentWordList = [];
+        
+        // 临时状态
+        let userAnswer = [];
+        let sourcePool = [];
+
+        // DOM
+        const elBadge = document.getElementById('mode-badge');
+        const elCn = document.getElementById('cn-text');
+        const elSlots = document.getElementById('slots-area');
+        const elOptions = document.getElementById('options-area');
+        const elMsg = document.getElementById('msg-area');
+        const btnNext = document.getElementById('btn-next');
+
+        function init() {
+            loadUnitList();
+            currentWordList = unitData[0].words;
+            loadLevel();
+        }
+
+        function loadUnitList() {
+            elBadge.innerHTML = '<option value="0">📖 选择单元</option>';
+            unitData.forEach((unit, index) => {
+                const option = document.createElement('option');
+                option.value = index;
+                option.textContent = unit.unit;
+                elBadge.appendChild(option);
+            });
+        }
+
+        function onUnitChange(value) {
+            currentUnitIndex = parseInt(value);
+            currentWordIndex = 0;
+            currentMode = 'word';
+            currentWordList = unitData[currentUnitIndex].words;
+            loadLevel();
+        }
+
+        // ===== 核心修复：切换前锁定高度，切换后解锁 =====
+        function lockContainerHeight() {
+            // 记录当前实际高度并固定，防止 innerHTML 清空时塌缩
+            elSlots.style.height = elSlots.offsetHeight + 'px';
+            elOptions.style.height = elOptions.offsetHeight + 'px';
+            elSlots.classList.add('locked');
+            elOptions.classList.add('locked');
+        }
+
+        function unlockContainerHeight() {
+            // 延迟一帧解锁，让新内容先渲染
+            requestAnimationFrame(() => {
+                elSlots.style.height = '';
+                elOptions.style.height = '';
+                elSlots.classList.remove('locked');
+                elOptions.classList.remove('locked');
+            });
+        }
+
+        function loadLevel() {
+            if (currentWordIndex >= currentWordList.length) {
+                currentWordIndex = 0;
+                alert("恭喜！本单元所有单词都练习完啦，重新开始！");
+            }
+            
+            currentItem = currentWordList[currentWordIndex];
+            
+            // ★ 切换前锁定高度，防止清空 DOM 时卡片高度塌缩导致晃动
+            lockContainerHeight();
+            
+            if (currentMode === 'word') {
+                setupWordMode();
+            } else {
+                setupSentenceMode();
+            }
+            
+            // 解锁
+            unlockContainerHeight();
+        }
+
+        // --- 阶段一：单词拼写 ---
+        function setupWordMode() {
+            elBadge.style.background = '#6c5ce7';
+            elCn.textContent = currentItem.cn;
+            
+            userAnswer = [];
+            const letters = currentItem.word.split('').map((char, i) => ({ char, id: i }));
+            sourcePool = [...letters].sort(() => Math.random() - 0.5);
+            
+            renderWordUI();
+            playAudio();
+            
+            btnNext.style.display = 'none';
+            elMsg.textContent = '';
+        }
+
+        function renderWordUI() {
+            elSlots.innerHTML = '';
+            elOptions.innerHTML = '';
+
+            // 渲染槽位
+            for(let i=0; i<currentItem.word.length; i++) {
+                const slot = document.createElement('div');
+                slot.className = 'letter-slot';
+                if(userAnswer[i]) {
+                    slot.textContent = userAnswer[i].char.toUpperCase();
+                    slot.className += ' filled';
+                    slot.onclick = () => removeLetter(i);
+                }
+                elSlots.appendChild(slot);
+            }
+
+            // 渲染选项
+            sourcePool.forEach(item => {
+                const isUsed = userAnswer.some(u => u.id === item.id);
+                const btn = document.createElement('div');
+                btn.className = `letter-btn ${isUsed ? 'used' : ''}`;
+                btn.textContent = item.char.toUpperCase();
+                if(!isUsed) {
+                    btn.onclick = () => addLetter(item);
+                }
+                elOptions.appendChild(btn);
+            });
+        }
+
+        function addLetter(item) {
+            userAnswer.push(item);
+            renderWordUI();
+            checkWordAnswer();
+        }
+
+        function removeLetter(index) {
+            userAnswer.splice(index, 1);
+            renderWordUI();
+            elMsg.textContent = '';
+        }
+
+        function checkWordAnswer() {
+            const currentStr = userAnswer.map(u => u.char).join('');
+            if(currentStr.length === currentItem.word.length) {
+                if(currentStr.toLowerCase() === currentItem.word.toLowerCase()) {
+                    handleSuccess("单词拼对啦！");
+                } else {
+                    elMsg.textContent = "不对哦，再试试";
+                    elMsg.className = "status-msg error";
+                }
+            }
+        }
+
+        // --- 阶段二：句子重组 ---
+        function setupSentenceMode() {
+            elBadge.style.background = '#e17055';
+            elCn.textContent = currentItem.sentenceCn;
+            
+            userAnswer = [];
+            const words = currentItem.sentence.split(' ');
+            sourcePool = words.map((w, i) => ({ text: w, id: i }));
+            sourcePool.sort(() => Math.random() - 0.5);
+            
+            renderSentenceUI();
+            playAudio();
+
+            btnNext.style.display = 'none';
+            elMsg.textContent = '';
+        }
+
+        function renderSentenceUI() {
+            elSlots.innerHTML = '';
+            elOptions.innerHTML = '';
+
+            const targetLen = currentItem.sentence.split(' ').length;
+
+            // 渲染槽位
+            for(let i=0; i<targetLen; i++) {
+                const slot = document.createElement('div');
+                slot.className = 'word-slot';
+                if(userAnswer[i]) {
+                    slot.textContent = userAnswer[i].text;
+                    slot.className += ' filled';
+                    slot.onclick = () => removeWord(i);
+                }
+                elSlots.appendChild(slot);
+            }
+
+            // 渲染选项
+            sourcePool.forEach(item => {
+                const isUsed = userAnswer.some(u => u.id === item.id);
+                const btn = document.createElement('div');
+                btn.className = `word-btn ${isUsed ? 'used' : ''}`;
+                btn.textContent = item.text;
+                if(!isUsed) {
+                    btn.onclick = () => addWord(item);
+                }
+                elOptions.appendChild(btn);
+            });
+        }
+
+        function addWord(item) {
+            userAnswer.push(item);
+            renderSentenceUI();
+            checkSentenceAnswer();
+        }
+
+        function removeWord(index) {
+            userAnswer.splice(index, 1);
+            renderSentenceUI();
+            elMsg.textContent = '';
+        }
+
+        function checkSentenceAnswer() {
+            const targetArr = currentItem.sentence.split(' ');
+            if(userAnswer.length === targetArr.length) {
+                const currentStr = userAnswer.map(u => u.text).join(' ');
+                if(currentStr === currentItem.sentence) {
+                    handleSuccess("句子组对啦！太棒了！");
+                } else {
+                    elMsg.textContent = "顺序不对哦";
+                    elMsg.className = "status-msg error";
+                }
+            }
+        }
+
+        // --- 通用逻辑 ---
+        function handleSuccess(text) {
+            elMsg.textContent = text;
+            elMsg.className = "status-msg success";
+            btnNext.style.display = 'block';
+            triggerConfetti();
+            playAudio();
+        }
+
+        function nextStageOrWord() {
+            if (currentMode === 'word') {
+                currentMode = 'sentence';
+                loadLevel();
+            } else {
+                currentMode = 'word';
+                currentWordIndex++;
+                if(currentWordIndex >= currentWordList.length) {
+                    currentWordIndex = 0;
+                    alert("恭喜！本单元所有单词都练习完啦，重新开始！");
+                }
+                loadLevel();
+            }
+        }
+
+        function playAudio() {
+            if(!currentItem) return;
+            const text = currentMode === 'word' ? currentItem.word : currentItem.sentence;
+            
+            if ('speechSynthesis' in window) {
+                window.speechSynthesis.cancel();
+                const u = new SpeechSynthesisUtterance(text);
+                u.lang = 'en-US';
+                u.rate = 0.8;
+                window.speechSynthesis.speak(u);
+            }
+        }
+
+        function triggerConfetti() {
+            const colors = ['#ff7675', '#74b9ff', '#55efc4', '#ffeaa7'];
+            for(let i=0; i<20; i++) {
+                const c = document.createElement('div');
+                c.className = 'confetti';
+                c.style.left = Math.random()*100 + '%';
+                c.style.backgroundColor = colors[Math.floor(Math.random()*colors.length)];
+                c.style.animationDuration = (Math.random()*1 + 1) + 's';
+                document.body.appendChild(c);
+                setTimeout(() => c.remove(), 2000);
+            }
+        }
+
+        init();
+    </script>
+</body>
+</html>
